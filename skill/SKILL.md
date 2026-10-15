@@ -34,6 +34,7 @@ Grok Bot cannot see this conversation. Every message must stand alone:
 2. The facts it needs: links, file locations, results of earlier steps
 3. The deliverable, its format, and what "done" means
 4. Limits: which actions need the user's approval first (sending, paying, deleting, publishing by default)
+5. Always end with: "Finish this within this turn and send the full result before ending; don't just acknowledge." Once a turn ends, Grok Bot doesn't wake up on its own, so a promised "I'll send it later" never arrives.
 
 Example:
 
@@ -42,7 +43,7 @@ Example:
 ## Long jobs
 
 - Expected to take more than a minute or two: `grokbot_ask` with `wait_seconds: 0`, tell the user it's dispatched, keep working, `grokbot_check` when the result is needed.
-- Grok Bot often replies "on it", ends its turn, and posts the result later. When `ask` only returns an acknowledgement, call `grokbot_check` with a generous `wait_seconds` (e.g. 300) to wait for the real result.
+- When `ask` only returns an acknowledgement, call `grokbot_check` with a generous `wait_seconds` (e.g. 300). If nothing arrives, the turn already ended: `grokbot_ask` again and ask it to finish within that turn.
 - Don't poll `grokbot_check` in a tight loop.
 - "still working on an earlier message; nothing was sent": `grokbot_check` first, or `grokbot_interrupt` if the user wants, then ask again.
 
