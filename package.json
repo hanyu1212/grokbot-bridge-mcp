@@ -1,0 +1,40 @@
+{
+  "name": "grokbot-bridge-mcp",
+  "version": "0.1.0",
+  "description": "Unofficial MCP bridge that lets Cursor, Claude Code, Codex and other MCP clients dispatch work to your Grok Bot agents.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "grokbot-bridge-mcp": "src/server.js",
+    "grokbot-bridge": "src/cli.js"
+  },
+  "files": [
+    "src",
+    "bot",
+    "skill",
+    "examples",
+    "README.md",
+    "README.en.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test \"test/**/*.test.js\""
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "keywords": [
+    "mcp",
+    "grok-bot",
+    "cursor",
+    "claude-code",
+    "codex",
+    "agent"
+  ],
+  "dependencies": {
+    "@cursor/bdk": "^0.2.25",
+    "@modelcontextprotocol/sdk": "^1.20.0",
+    "zod": "^3.25.0"
+  }
+}

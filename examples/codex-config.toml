@@ -1,0 +1,5 @@
+[mcp_servers.grokbot]
+command = "npx"
+args = ["-y", "grokbot-bridge-mcp"]
+env = { GROKBOT_AGENTS = "Grok Bot" }
+startup_timeout_sec = 60
