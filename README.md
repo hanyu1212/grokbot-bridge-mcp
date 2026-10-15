@@ -14,6 +14,22 @@ Agent ──grokbot_ask──▶ Grok Bot（云电脑上执行）
 Agent ◀──── 回复 ────── "已导出 312 单，文件在 /workspace/orders/2026-W42.csv"
 ```
 
+## 快速开始
+
+需要 Node.js 22.13 或更高，以及一个能用 Grok Bot 的 Cursor 账号。
+
+```bash
+npx grokbot-bridge-mcp setup
+```
+
+它会依次：没登录 Cursor 就打开浏览器授权；问你 Bot 的名字（默认 `Grok Bot`）；找到本机装的 Cursor、Codex、Claude Code，逐个问你要不要配上（改配置前先备份）；最后可以发一条测试消息确认连通。完成后重启客户端，说“让 Grok Bot ……”就行。
+
+只用 Cursor 的话，也可以点这个按钮（还需要先跑一次 `npx @cursor/bdk login` 登录）：
+
+[![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=grokbot&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsImdyb2tib3QtYnJpZGdlLW1jcCJdLCJlbnYiOnsiR1JPS0JPVF9BR0VOVFMiOiJHcm9rIEJvdCJ9fQ%3D%3D)
+
+按钮默认联系名为 `Grok Bot` 的 Bot，名字不一样的话，装完在 `~/.cursor/mcp.json` 里改 `GROKBOT_AGENTS`。
+
 ## 提供的工具
 
 | 工具 | 作用 |
@@ -25,17 +41,11 @@ Agent ◀──── 回复 ────── "已导出 312 单，文件在 /
 
 回复原样返回，中间不经过任何额外模型。
 
-## 前置条件
+## 手动安装
 
-- Node.js 22.13 或更高
-- 一个能用 Grok Bot 的 Cursor 账号
-- Cursor 凭据，二选一：
-  - 运行一次 `npx @cursor/bdk login`，在浏览器里授权
-  - 或者设置环境变量 `CURSOR_API_KEY`
+不想用 `setup` 时，先登录一次（`npx @cursor/bdk login`，或者设置环境变量 `CURSOR_API_KEY`），再按客户端加配置。
 
-## 安装
-
-`GROKBOT_AGENTS` 填 Bot 的名字，必须和 Grok Bot 应用里显示的**完全一致**，多个用英文逗号分隔。名字拼错会被拒绝，避免意外新建一个空 Bot。
+`GROKBOT_AGENTS` 填 Bot 的名字，必须和 Grok Bot 应用里显示的**完全一致**，多个用英文逗号分隔。不在名单里的名字会被拒绝；但名单里的名字如果拼错了，第一次联系时会新建一个空 Bot，返回结果里会带 `created: true`。
 
 ### Cursor
 
@@ -83,6 +93,7 @@ codex mcp add grokbot --env GROKBOT_AGENTS="Grok Bot" -- npx -y grokbot-bridge-m
 - `tool_timeout_sec` 要大于 `wait_seconds` 的上限（600 秒），否则长任务会被 Codex 先掐断。
 - Codex 会话启动时不会一直等慢的 MCP 服务。第一次用 `npx` 要下载依赖，可能赶不上，工具就不会出现。遇到这种情况，先 `npm install -g grokbot-bridge-mcp`，再把 `command` 改成 `grokbot-bridge-mcp`、删掉 `args`。
 - `grokbot_ask` 和 `grokbot_interrupt` 会给 Bot 发消息，Codex 默认每次弹窗确认；`grokbot_list` 和 `grokbot_check` 标成了只读。想免确认，在配置里加 `default_tools_approval_mode = "approve"`。
+- Codex 要模型自己去搜 MCP 工具，技能装得多时，“问问 Grok Bot”可能被派去别的技能。在 `~/.codex/AGENTS.md` 里加一句“提到 Grok Bot 就用 grokbot 的工具”会稳很多，`setup` 会问你要不要加。
 
 其他客户端的写法见 [examples/](examples/)。
 

@@ -9,7 +9,7 @@ import { parseListeningUrl } from "./config.js";
 const PROJECT_DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
 const STARTUP_TIMEOUT_MS = 60_000;
 
-function bdkBin() {
+export function bdkBin() {
   const require = createRequire(import.meta.url);
   const pkgPath = require.resolve("@cursor/bdk/package.json");
   const { bin } = require(pkgPath);
