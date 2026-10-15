@@ -37,7 +37,8 @@ export const TOOLS = [
     name: "grokbot_check",
     title: "Check a Grok Bot",
     description:
-      'Read replies that arrived since the last ask/check (use after grokbot_ask returned status "running"). Do not poll in a tight loop.' +
+      "Read replies that arrived since the last ask/check, waiting up to wait_seconds for one to arrive. " +
+      'Use it after grokbot_ask returned status "running", or when the Bot only acknowledged and is still working in the background. Do not poll in a tight loop.' +
       UNTRUSTED,
     inputSchema: { agent, wait_seconds: waitSeconds },
     run: (bridge, input) => bridge.check(input),

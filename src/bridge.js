@@ -4,6 +4,9 @@ import { resolveAgent } from "./config.js";
 import { startServe } from "./serve.js";
 
 const CALL_TIMEOUT_GRACE_MS = 30_000;
+const NO_REPLY_RECHECK_MS = 5_000;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Talks to Grok Bot through the `call_tool` tool that `bdk serve` exposes on
@@ -58,8 +61,19 @@ export class GrokBotBridge {
     );
   }
 
-  check({ agent, wait_seconds }) {
-    return this.call("grokbot__check", { agent: resolveAgent(agent, this.config.agents), wait_seconds }, wait_seconds);
+  /**
+   * Grok Bot often acknowledges, ends its turn, and posts the result later from
+   * background work, so keep checking until a reply arrives or time runs out.
+   */
+  async check({ agent, wait_seconds }) {
+    const name = resolveAgent(agent, this.config.agents);
+    const deadline = Date.now() + wait_seconds * 1000;
+    while (true) {
+      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      const result = await this.call("grokbot__check", { agent: name, wait_seconds: remaining }, remaining);
+      if (result.reply !== undefined || result.status === "running" || Date.now() >= deadline) return result;
+      await sleep(NO_REPLY_RECHECK_MS);
+    }
   }
 
   interrupt({ agent }) {

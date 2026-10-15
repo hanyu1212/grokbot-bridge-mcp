@@ -42,6 +42,7 @@ Example:
 ## Long jobs
 
 - Expected to take more than a minute or two: `grokbot_ask` with `wait_seconds: 0`, tell the user it's dispatched, keep working, `grokbot_check` when the result is needed.
+- Grok Bot often replies "on it", ends its turn, and posts the result later. When `ask` only returns an acknowledgement, call `grokbot_check` with a generous `wait_seconds` (e.g. 300) to wait for the real result.
 - Don't poll `grokbot_check` in a tight loop.
 - "still working on an earlier message; nothing was sent": `grokbot_check` first, or `grokbot_interrupt` if the user wants, then ask again.
 
