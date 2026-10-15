@@ -1,9 +1,10 @@
 [mcp_servers.grokbot]
-command = "npx"
-args = ["-y", "grokbot-bridge-mcp"]
-env = { GROKBOT_AGENTS = "Grok Bot" }
+command = "grokbot-bridge-mcp"
 startup_timeout_sec = 90
 # Must exceed the 600-second wait_seconds cap.
 tool_timeout_sec = 660
 # Uncomment to skip the confirmation before grokbot_ask / grokbot_interrupt.
 # default_tools_approval_mode = "approve"
+
+[mcp_servers.grokbot.env]
+GROKBOT_AGENTS = "Grok Bot"

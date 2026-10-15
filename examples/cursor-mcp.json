@@ -1,11 +1,8 @@
 {
   "mcpServers": {
     "grokbot": {
-      "command": "npx",
-      "args": ["-y", "grokbot-bridge-mcp"],
-      "env": {
-        "GROKBOT_AGENTS": "Grok Bot"
-      }
+      "command": "grokbot-bridge-mcp",
+      "env": { "GROKBOT_AGENTS": "Grok Bot" }
     }
   }
 }

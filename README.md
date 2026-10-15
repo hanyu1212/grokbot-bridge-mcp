@@ -19,16 +19,18 @@ Agent ◀──── 回复 ────── "已导出 312 单，文件在 /
 需要 Node.js 22.13 或更高，以及一个能用 Grok Bot 的 Cursor 账号。
 
 ```bash
-npx grokbot-bridge-mcp setup
+npx -y github:hanyu1212/grokbot-bridge-mcp setup
 ```
 
-它会依次：没登录 Cursor 就打开浏览器授权；问你 Bot 的名字（默认 `Grok Bot`）；找到本机装的 Cursor、Codex、Claude Code，逐个问你要不要配上（改配置前先备份）；最后可以发一条测试消息确认连通。完成后重启客户端，说“让 Grok Bot ……”就行。
+它会依次：
 
-只用 Cursor 的话，也可以点这个按钮（还需要先跑一次 `npx @cursor/bdk login` 登录）：
+1. 没登录 Cursor 就打开浏览器授权
+2. 问你 Bot 的名字（默认 `Grok Bot`）
+3. 在 `~/.config/grokbot-bridge/app` 装一份固定副本，之后客户端启动只要一两秒
+4. 找到本机装的 Cursor、Codex、Claude Code，逐个问你要不要配上（改配置前先备份）
+5. 发一条测试消息确认连通
 
-[![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=grokbot&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsImdyb2tib3QtYnJpZGdlLW1jcCJdLCJlbnYiOnsiR1JPS0JPVF9BR0VOVFMiOiJHcm9rIEJvdCJ9fQ%3D%3D)
-
-按钮默认联系名为 `Grok Bot` 的 Bot，名字不一样的话，装完在 `~/.cursor/mcp.json` 里改 `GROKBOT_AGENTS`。
+完成后重启客户端，说“让 Grok Bot ……”就行。想升级到最新版，重新跑一次这条命令。
 
 ## 提供的工具
 
@@ -43,9 +45,14 @@ npx grokbot-bridge-mcp setup
 
 ## 手动安装
 
-不想用 `setup` 时，先登录一次（`npx @cursor/bdk login`，或者设置环境变量 `CURSOR_API_KEY`），再按客户端加配置。
+不想用 `setup` 时：
 
-`GROKBOT_AGENTS` 填 Bot 的名字，必须和 Grok Bot 应用里显示的**完全一致**，多个用英文逗号分隔。不在名单里的名字会被拒绝；但名单里的名字如果拼错了，第一次联系时会新建一个空 Bot，返回结果里会带 `created: true`。
+```bash
+npx @cursor/bdk login                                  # 登录 Cursor，或者设置环境变量 CURSOR_API_KEY
+npm install -g github:hanyu1212/grokbot-bridge-mcp     # 装好后有 grokbot-bridge-mcp 命令
+```
+
+再按客户端加配置。`GROKBOT_AGENTS` 填 Bot 的名字，必须和 Grok Bot 应用里显示的**完全一致**，多个用英文逗号分隔。不在名单里的名字会被拒绝；但名单里的名字如果拼错了，第一次联系时会新建一个空 Bot，返回结果里会带 `created: true`。
 
 ### Cursor
 
@@ -55,8 +62,7 @@ npx grokbot-bridge-mcp setup
 {
   "mcpServers": {
     "grokbot": {
-      "command": "npx",
-      "args": ["-y", "grokbot-bridge-mcp"],
+      "command": "grokbot-bridge-mcp",
       "env": { "GROKBOT_AGENTS": "Grok Bot" }
     }
   }
@@ -66,7 +72,7 @@ npx grokbot-bridge-mcp setup
 ### Claude Code
 
 ```bash
-claude mcp add grokbot -e GROKBOT_AGENTS="Grok Bot" -- npx -y grokbot-bridge-mcp
+claude mcp add grokbot --scope user -e GROKBOT_AGENTS="Grok Bot" -- grokbot-bridge-mcp
 ```
 
 ### Codex
@@ -75,27 +81,22 @@ claude mcp add grokbot -e GROKBOT_AGENTS="Grok Bot" -- npx -y grokbot-bridge-mcp
 
 ```toml
 [mcp_servers.grokbot]
-command = "npx"
-args = ["-y", "grokbot-bridge-mcp"]
-env = { GROKBOT_AGENTS = "Grok Bot" }
+command = "grokbot-bridge-mcp"
 startup_timeout_sec = 90
 tool_timeout_sec = 660
-```
 
-也可以用命令添加（Codex 桌面版自带的命令行在 `/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex`），加完再手动补上面两行超时：
-
-```bash
-codex mcp add grokbot --env GROKBOT_AGENTS="Grok Bot" -- npx -y grokbot-bridge-mcp
+[mcp_servers.grokbot.env]
+GROKBOT_AGENTS = "Grok Bot"
 ```
 
 几点说明：
 
 - `tool_timeout_sec` 要大于 `wait_seconds` 的上限（600 秒），否则长任务会被 Codex 先掐断。
-- Codex 会话启动时不会一直等慢的 MCP 服务。第一次用 `npx` 要下载依赖，可能赶不上，工具就不会出现。遇到这种情况，先 `npm install -g grokbot-bridge-mcp`，再把 `command` 改成 `grokbot-bridge-mcp`、删掉 `args`。
 - `grokbot_ask` 和 `grokbot_interrupt` 会给 Bot 发消息，Codex 默认每次弹窗确认；`grokbot_list` 和 `grokbot_check` 标成了只读。想免确认，在配置里加 `default_tools_approval_mode = "approve"`。
 - Codex 要模型自己去搜 MCP 工具，技能装得多时，“问问 Grok Bot”可能被派去别的技能。在 `~/.codex/AGENTS.md` 里加一句“提到 Grok Bot 就用 grokbot 的工具”会稳很多，`setup` 会问你要不要加。
+- Codex 桌面版自带的命令行在 `/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex`，也可以用 `codex mcp add` 添加，加完再手动补上两行超时。
 
-其他客户端的写法见 [examples/](examples/)。
+不要在配置里写 `npx -y github:...` 直接启动：每次都要从 GitHub 重新拉代码，要等半分钟以上，Codex 会因为太慢跳过这个工具。其他客户端的写法见 [examples/](examples/)。
 
 ### 可选：装上 skill
 
@@ -105,13 +106,13 @@ codex mcp add grokbot --env GROKBOT_AGENTS="Grok Bot" -- npx -y grokbot-bridge-m
 
 ## 命令行
 
-不用 MCP 也能直接调：
+全局安装后也有一个命令行工具，不用 MCP 也能直接调：
 
 ```bash
 export GROKBOT_AGENTS="Grok Bot"
-npx -p grokbot-bridge-mcp grokbot-bridge ask "把今天的 AI 新闻整理成 5 条摘要" --wait 120
-npx -p grokbot-bridge-mcp grokbot-bridge check
-npx -p grokbot-bridge-mcp grokbot-bridge list
+grokbot-bridge ask "把今天的 AI 新闻整理成 5 条摘要" --wait 120
+grokbot-bridge check
+grokbot-bridge list
 ```
 
 ## 工作原理

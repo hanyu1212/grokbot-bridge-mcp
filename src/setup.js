@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { createInterface } from "node:readline/promises";
@@ -18,8 +18,10 @@ import { bdkBin } from "./serve.js";
 
 const MIN_NODE = [22, 13];
 const SERVER_JS = join(dirname(fileURLToPath(import.meta.url)), "server.js");
+const DEFAULT_SOURCE = "github:hanyu1212/grokbot-bridge-mcp";
+const APP_DIR = join(homedir(), ".config", "grokbot-bridge", "app");
 
-const USAGE = `Usage: npx grokbot-bridge-mcp setup [options]
+const USAGE = `Usage: npx -y ${DEFAULT_SOURCE} setup [options]
 
 Signs you in to Cursor if needed, then adds the grokbot MCP server to
 Cursor, Codex and Claude Code. Existing config files are backed up first.
@@ -29,6 +31,7 @@ Options:
   --clients <list>   cursor,codex,claude (default: every one detected)
   -y, --yes          Accept the defaults without asking
   --skip-test        Don't send a test message at the end
+  --source <spec>    What to install when run through npx (default: ${DEFAULT_SOURCE})
   -h, --help         Show this help`;
 
 const say = (text = "") => console.log(text);
@@ -39,14 +42,29 @@ function nodeIsRecentEnough() {
 }
 
 /**
- * Write the launch command that keeps working after setup exits: npx when
- * setup itself ran from the npx cache, otherwise this exact install.
+ * The npx cache can be cleared at any time and re-fetching from GitHub on
+ * every client start is too slow, so when setup runs from npx it installs a
+ * copy under APP_DIR and points clients there. Global installs and clones are
+ * used in place.
  */
-function resolveLaunch() {
-  if (/[\\/]_npx[\\/]/.test(SERVER_JS)) {
-    return { command: "npx", args: ["-y", "grokbot-bridge-mcp"] };
-  }
-  return { command: stableNodePath(), args: [SERVER_JS] };
+function resolveLaunch(source) {
+  if (!/[\\/]_npx[\\/]/.test(SERVER_JS)) return { command: stableNodePath(), args: [SERVER_JS] };
+  say(`Installing ${source} into ${APP_DIR} (this takes about a minute)...`);
+  const staging = `${APP_DIR}-new`;
+  rmSync(staging, { recursive: true, force: true });
+  mkdirSync(staging, { recursive: true });
+  const npm = process.platform === "win32" ? "npm.cmd" : "npm";
+  const result = spawnSync(npm, ["install", "--prefix", staging, "--no-fund", "--no-audit", source], {
+    stdio: ["ignore", "ignore", "inherit"],
+    shell: process.platform === "win32",
+  });
+  if (result.status !== 0) throw new Error(`npm install ${source} failed.`);
+  rmSync(APP_DIR, { recursive: true, force: true });
+  renameSync(staging, APP_DIR);
+  return {
+    command: stableNodePath(),
+    args: [join(APP_DIR, "node_modules", "grokbot-bridge-mcp", "src", "server.js")],
+  };
 }
 
 /**
@@ -187,6 +205,7 @@ export async function runSetup(argv) {
       clients: { type: "string" },
       yes: { type: "boolean", short: "y", default: false },
       "skip-test": { type: "boolean", default: false },
+      source: { type: "string", default: DEFAULT_SOURCE },
       help: { type: "boolean", short: "h", default: false },
     },
   });
@@ -239,7 +258,7 @@ export async function runSetup(argv) {
 
     const clients = detectClients();
     const requested = values.clients ? new Set(parseAgents(values.clients).map((c) => c.toLowerCase())) : undefined;
-    const entry = serverEntry(resolveLaunch(), agents);
+    const entry = serverEntry(resolveLaunch(values.source), agents);
     say(`\nLaunch command: ${[entry.command, ...entry.args].join(" ")}\n`);
 
     let configured = 0;
@@ -266,6 +285,9 @@ export async function runSetup(argv) {
 
     say("\nDone. Restart (or reload MCP in) each client, then say “ask Grok Bot to …”.");
     return 0;
+  } catch (error) {
+    say(`\nSetup failed: ${error.message}`);
+    return 1;
   } finally {
     rl?.close();
   }

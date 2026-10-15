@@ -13,16 +13,18 @@ Keep local work in your editor. Send remote, long-running, logged-in-browser, or
 Needs Node.js 22.13+ and a Cursor account with Grok Bot access.
 
 ```bash
-npx grokbot-bridge-mcp setup
+npx -y github:hanyu1212/grokbot-bridge-mcp setup
 ```
 
-It signs you in to Cursor if needed (opens a browser), asks for your Bot name (default `Grok Bot`), offers to configure each of Cursor, Codex and Claude Code it finds (backing up config files first), and can send a test message. Then restart your client and say "ask Grok Bot to …".
+It will:
 
-Cursor only? Use the button (sign in first with `npx @cursor/bdk login`):
+1. Sign you in to Cursor if needed (opens a browser)
+2. Ask for your Bot name (default `Grok Bot`)
+3. Install a copy under `~/.config/grokbot-bridge/app`, so clients start it in a second or two
+4. Offer to configure each of Cursor, Codex and Claude Code it finds (backing up config files first)
+5. Send a test message to confirm it works
 
-[![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=grokbot&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsImdyb2tib3QtYnJpZGdlLW1jcCJdLCJlbnYiOnsiR1JPS0JPVF9BR0VOVFMiOiJHcm9rIEJvdCJ9fQ%3D%3D)
-
-The button targets a Bot named `Grok Bot`; if yours differs, edit `GROKBOT_AGENTS` in `~/.cursor/mcp.json` afterwards.
+Then restart your client and say "ask Grok Bot to …". Run the same command again to update.
 
 ## Tools
 
@@ -37,9 +39,14 @@ Replies come back verbatim; no extra model sits in between.
 
 ## Manual install
 
-Skipping `setup`? Sign in once (`npx @cursor/bdk login`, or set `CURSOR_API_KEY`), then add a config for your client.
+Skipping `setup`:
 
-Set `GROKBOT_AGENTS` to your Bot names **exactly** as shown in the Grok Bot app, comma-separated. Names outside the list are rejected; a misspelled name inside the list creates an empty Bot on first contact, and the result says `created: true`.
+```bash
+npx @cursor/bdk login                                  # or set CURSOR_API_KEY
+npm install -g github:hanyu1212/grokbot-bridge-mcp     # provides the grokbot-bridge-mcp command
+```
+
+Then add a config for your client. Set `GROKBOT_AGENTS` to your Bot names **exactly** as shown in the Grok Bot app, comma-separated. Names outside the list are rejected; a misspelled name inside the list creates an empty Bot on first contact, and the result says `created: true`.
 
 ### Cursor (`~/.cursor/mcp.json`)
 
@@ -47,8 +54,7 @@ Set `GROKBOT_AGENTS` to your Bot names **exactly** as shown in the Grok Bot app,
 {
   "mcpServers": {
     "grokbot": {
-      "command": "npx",
-      "args": ["-y", "grokbot-bridge-mcp"],
+      "command": "grokbot-bridge-mcp",
       "env": { "GROKBOT_AGENTS": "Grok Bot" }
     }
   }
@@ -58,35 +64,39 @@ Set `GROKBOT_AGENTS` to your Bot names **exactly** as shown in the Grok Bot app,
 ### Claude Code
 
 ```bash
-claude mcp add grokbot -e GROKBOT_AGENTS="Grok Bot" -- npx -y grokbot-bridge-mcp
+claude mcp add grokbot --scope user -e GROKBOT_AGENTS="Grok Bot" -- grokbot-bridge-mcp
 ```
 
 ### Codex (`~/.codex/config.toml`)
 
 ```toml
 [mcp_servers.grokbot]
-command = "npx"
-args = ["-y", "grokbot-bridge-mcp"]
-env = { GROKBOT_AGENTS = "Grok Bot" }
+command = "grokbot-bridge-mcp"
 startup_timeout_sec = 90
 tool_timeout_sec = 660
+
+[mcp_servers.grokbot.env]
+GROKBOT_AGENTS = "Grok Bot"
 ```
 
-Or `codex mcp add grokbot --env GROKBOT_AGENTS="Grok Bot" -- npx -y grokbot-bridge-mcp`, then add the two timeouts by hand. (The Codex desktop app ships its CLI at `/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex`.)
-
 - `tool_timeout_sec` must exceed the 600-second `wait_seconds` cap, or Codex cuts long asks short.
-- Codex does not wait long for slow MCP servers when a session starts. The first `npx` run downloads dependencies and can miss it, so the tools never show up. If that happens, `npm install -g grokbot-bridge-mcp`, set `command = "grokbot-bridge-mcp"` and drop `args`.
 - `grokbot_ask` and `grokbot_interrupt` message your Bot, so Codex asks before each call. `grokbot_list` and `grokbot_check` are marked read-only. To skip the prompts, add `default_tools_approval_mode = "approve"`.
 - Codex makes the model search for MCP tools, so with many skills installed "ask Grok Bot" can get routed elsewhere. A line in `~/.codex/AGENTS.md` saying to use the grokbot tools whenever Grok Bot is mentioned fixes that; `setup` offers to add it.
+- The Codex desktop app ships its CLI at `/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex` if you prefer `codex mcp add`; add the two timeouts by hand afterwards.
 
-See [examples/](examples/) for more. No skill is required: the server's MCP instructions and tool descriptions already tell the agent when to delegate and how to write messages, and every message gets a "finish within this turn" note appended (set `GROKBOT_FINISH_IN_TURN=0` to turn it off). The optional [skill](skill/SKILL.md) is a longer version you can tailor to how you split work.
+Don't launch it with `npx -y github:...` in a client config: that re-fetches from GitHub on every start (30+ seconds), and Codex gives up waiting. See [examples/](examples/) for more.
+
+No skill is required: the server's MCP instructions and tool descriptions already tell the agent when to delegate and how to write messages, and every message gets a "finish within this turn" note appended (set `GROKBOT_FINISH_IN_TURN=0` to turn it off). The optional [skill](skill/SKILL.md) is a longer version you can tailor to how you split work.
 
 ## CLI
 
+The global install also provides a CLI:
+
 ```bash
 export GROKBOT_AGENTS="Grok Bot"
-npx -p grokbot-bridge-mcp grokbot-bridge ask "Summarize today's AI news in 5 bullets" --wait 120
-npx -p grokbot-bridge-mcp grokbot-bridge check
+grokbot-bridge ask "Summarize today's AI news in 5 bullets" --wait 120
+grokbot-bridge check
+grokbot-bridge list
 ```
 
 ## How it works

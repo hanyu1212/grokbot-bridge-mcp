@@ -11,7 +11,7 @@ const USAGE = `Usage:
 
 Environment:
   GROKBOT_AGENTS   Comma-separated Grok Bot names (required)
-  CURSOR_API_KEY   Cursor API key (or run \`npx bdk login\` once)`;
+  CURSOR_API_KEY   Cursor API key (or run \`npx @cursor/bdk login\` once)`;
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
