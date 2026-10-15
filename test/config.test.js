@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { FINISH_IN_TURN_NOTE, withFinishNote } from "../src/bridge.js";
 import { loadConfig, parseAgents, parseListeningUrl, resolveAgent } from "../src/config.js";
 
 test("parseAgents trims and drops empty names", () => {
@@ -10,7 +11,17 @@ test("parseAgents trims and drops empty names", () => {
 test("loadConfig requires an allowlist", () => {
   assert.throws(() => loadConfig({}), /GROKBOT_AGENTS is not set/);
   const config = loadConfig({ GROKBOT_AGENTS: "Grok Bot", GROKBOT_BRIDGE_STATE_DIR: "/tmp/x" });
-  assert.deepEqual(config, { agents: ["Grok Bot"], stateDir: "/tmp/x" });
+  assert.deepEqual(config, { agents: ["Grok Bot"], stateDir: "/tmp/x", finishInTurn: true });
+});
+
+test("GROKBOT_FINISH_IN_TURN=0 turns the finish-in-turn note off", () => {
+  assert.equal(loadConfig({ GROKBOT_AGENTS: "a", GROKBOT_FINISH_IN_TURN: "0" }).finishInTurn, false);
+  assert.equal(loadConfig({ GROKBOT_AGENTS: "a", GROKBOT_FINISH_IN_TURN: "off" }).finishInTurn, false);
+  assert.equal(loadConfig({ GROKBOT_AGENTS: "a", GROKBOT_FINISH_IN_TURN: "1" }).finishInTurn, true);
+});
+
+test("withFinishNote appends the note after the message", () => {
+  assert.equal(withFinishNote("Check the logs.\n"), `Check the logs.\n\n${FINISH_IN_TURN_NOTE}`);
 });
 
 test("resolveAgent defaults to the only allowed bot", () => {

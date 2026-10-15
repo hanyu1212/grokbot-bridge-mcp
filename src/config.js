@@ -21,6 +21,7 @@ export function loadConfig(env = process.env) {
   return {
     agents,
     stateDir: env.GROKBOT_BRIDGE_STATE_DIR ?? join(homedir(), ".config", "grokbot-bridge"),
+    finishInTurn: !["0", "false", "off"].includes((env.GROKBOT_FINISH_IN_TURN ?? "").trim().toLowerCase()),
   };
 }
 

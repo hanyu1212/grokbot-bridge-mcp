@@ -88,7 +88,9 @@ codex mcp add grokbot --env GROKBOT_AGENTS="Grok Bot" -- npx -y grokbot-bridge-m
 
 ### 可选：装上 skill
 
-[skill/SKILL.md](skill/SKILL.md) 教 Agent 什么时候该交给 Grok Bot、消息怎么写才完整、长任务怎么处理。复制到客户端的 skill 目录即可，比如 Cursor 的 `~/.cursor/skills/grokbot-dispatch/SKILL.md`，然后按自己的习惯改分工部分。
+不装也能用：什么时候派活、消息怎么写、长任务先发再查，这些规则已经通过 MCP 的服务说明和工具描述交给了 Agent，“这一轮里做完”也由代码自动补在每条消息末尾。
+
+[skill/SKILL.md](skill/SKILL.md) 是更详细的版本，适合想按自己的习惯定分工的人。复制到客户端的 skill 目录即可，比如 Cursor 的 `~/.cursor/skills/grokbot-dispatch/SKILL.md`，然后按自己的习惯改分工部分。
 
 ## 命令行
 
@@ -123,6 +125,7 @@ npx -p grokbot-bridge-mcp grokbot-bridge list
 | `GROKBOT_AGENTS` | 必填。允许联系的 Bot 名字，逗号分隔 |
 | `CURSOR_API_KEY` | 可选。不想用 `bdk login` 时使用 |
 | `GROKBOT_BRIDGE_STATE_DIR` | 可选。状态目录，默认 `~/.config/grokbot-bridge` |
+| `GROKBOT_FINISH_IN_TURN` | 可选。默认在每条消息末尾自动加一句“在这一轮里做完再结束”，因为 Grok Bot 一轮结束后不会自己醒来补发结果。设为 `0` 关闭 |
 
 ## 开发
 

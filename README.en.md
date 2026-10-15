@@ -68,7 +68,7 @@ Or `codex mcp add grokbot --env GROKBOT_AGENTS="Grok Bot" -- npx -y grokbot-brid
 - Codex does not wait long for slow MCP servers when a session starts. The first `npx` run downloads dependencies and can miss it, so the tools never show up. If that happens, `npm install -g grokbot-bridge-mcp`, set `command = "grokbot-bridge-mcp"` and drop `args`.
 - `grokbot_ask` and `grokbot_interrupt` message your Bot, so Codex asks before each call. `grokbot_list` and `grokbot_check` are marked read-only. To skip the prompts, add `default_tools_approval_mode = "approve"`.
 
-See [examples/](examples/) for more. The optional [skill](skill/SKILL.md) teaches your agent when to delegate and how to write self-contained messages.
+See [examples/](examples/) for more. No skill is required: the server's MCP instructions and tool descriptions already tell the agent when to delegate and how to write messages, and every message gets a "finish within this turn" note appended (set `GROKBOT_FINISH_IN_TURN=0` to turn it off). The optional [skill](skill/SKILL.md) is a longer version you can tailor to how you split work.
 
 ## CLI
 

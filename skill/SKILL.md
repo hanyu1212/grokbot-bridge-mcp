@@ -34,7 +34,7 @@ Grok Bot cannot see this conversation. Every message must stand alone:
 2. The facts it needs: links, file locations, results of earlier steps
 3. The deliverable, its format, and what "done" means
 4. Limits: which actions need the user's approval first (sending, paying, deleting, publishing by default)
-5. Always end with: "Finish this within this turn and send the full result before ending; don't just acknowledge." Once a turn ends, Grok Bot doesn't wake up on its own, so a promised "I'll send it later" never arrives.
+5. The bridge appends "finish within this turn" to every message, because once a turn ends Grok Bot doesn't wake up on its own and a promised "I'll send it later" never arrives. Don't repeat it.
 
 Example:
 

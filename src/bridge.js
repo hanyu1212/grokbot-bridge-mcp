@@ -6,6 +6,16 @@ import { startServe } from "./serve.js";
 const CALL_TIMEOUT_GRACE_MS = 30_000;
 const NO_REPLY_RECHECK_MS = 5_000;
 
+// Grok Bot is not woken up again after its turn ends, so a reply promised for
+// "later" never arrives.
+export const FINISH_IN_TURN_NOTE =
+  "Finish this within the current turn and send the complete result before ending. " +
+  "Do not reply with only an acknowledgement.";
+
+export function withFinishNote(message) {
+  return `${message.trimEnd()}\n\n${FINISH_IN_TURN_NOTE}`;
+}
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
@@ -54,9 +64,10 @@ export class GrokBotBridge {
   }
 
   ask({ agent, message, wait_seconds }) {
+    const text = this.config.finishInTurn ? withFinishNote(message) : message;
     return this.call(
       "grokbot__ask",
-      { agent: resolveAgent(agent, this.config.agents), message, wait_seconds },
+      { agent: resolveAgent(agent, this.config.agents), message: text, wait_seconds },
       wait_seconds,
     );
   }

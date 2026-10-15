@@ -3,7 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { GrokBotBridge } from "./bridge.js";
 import { loadConfig } from "./config.js";
-import { TOOLS } from "./tools.js";
+import { SERVER_INSTRUCTIONS, TOOLS } from "./tools.js";
 
 // stdout carries MCP messages; everything else goes to stderr.
 const log = (text) => process.stderr.write(text);
@@ -17,7 +17,10 @@ try {
 }
 
 const bridge = new GrokBotBridge(config, { log });
-const server = new McpServer({ name: "grokbot-bridge", version: "0.1.0" });
+const server = new McpServer(
+  { name: "grokbot-bridge", version: "0.1.0" },
+  { instructions: SERVER_INSTRUCTIONS },
+);
 
 for (const tool of TOOLS) {
   server.registerTool(
