@@ -68,7 +68,21 @@ claude mcp add grokbot -e GROKBOT_AGENTS="Grok Bot" -- npx -y grokbot-bridge-mcp
 command = "npx"
 args = ["-y", "grokbot-bridge-mcp"]
 env = { GROKBOT_AGENTS = "Grok Bot" }
+startup_timeout_sec = 90
+tool_timeout_sec = 660
 ```
+
+也可以用命令添加（Codex 桌面版自带的命令行在 `/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex`），加完再手动补上面两行超时：
+
+```bash
+codex mcp add grokbot --env GROKBOT_AGENTS="Grok Bot" -- npx -y grokbot-bridge-mcp
+```
+
+几点说明：
+
+- `tool_timeout_sec` 要大于 `wait_seconds` 的上限（600 秒），否则长任务会被 Codex 先掐断。
+- Codex 会话启动时不会一直等慢的 MCP 服务。第一次用 `npx` 要下载依赖，可能赶不上，工具就不会出现。遇到这种情况，先 `npm install -g grokbot-bridge-mcp`，再把 `command` 改成 `grokbot-bridge-mcp`、删掉 `args`。
+- `grokbot_ask` 和 `grokbot_interrupt` 会给 Bot 发消息，Codex 默认每次弹窗确认；`grokbot_list` 和 `grokbot_check` 标成了只读。想免确认，在配置里加 `default_tools_approval_mode = "approve"`。
 
 其他客户端的写法见 [examples/](examples/)。
 

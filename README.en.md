@@ -58,7 +58,15 @@ claude mcp add grokbot -e GROKBOT_AGENTS="Grok Bot" -- npx -y grokbot-bridge-mcp
 command = "npx"
 args = ["-y", "grokbot-bridge-mcp"]
 env = { GROKBOT_AGENTS = "Grok Bot" }
+startup_timeout_sec = 90
+tool_timeout_sec = 660
 ```
+
+Or `codex mcp add grokbot --env GROKBOT_AGENTS="Grok Bot" -- npx -y grokbot-bridge-mcp`, then add the two timeouts by hand. (The Codex desktop app ships its CLI at `/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex`.)
+
+- `tool_timeout_sec` must exceed the 600-second `wait_seconds` cap, or Codex cuts long asks short.
+- Codex does not wait long for slow MCP servers when a session starts. The first `npx` run downloads dependencies and can miss it, so the tools never show up. If that happens, `npm install -g grokbot-bridge-mcp`, set `command = "grokbot-bridge-mcp"` and drop `args`.
+- `grokbot_ask` and `grokbot_interrupt` message your Bot, so Codex asks before each call. `grokbot_list` and `grokbot_check` are marked read-only. To skip the prompts, add `default_tools_approval_mode = "approve"`.
 
 See [examples/](examples/) for more. The optional [skill](skill/SKILL.md) teaches your agent when to delegate and how to write self-contained messages.
 

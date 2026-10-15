@@ -31,6 +31,7 @@ export const TOOLS = [
       message: z.string().min(1).describe("Self-contained message for the Grok Bot."),
       wait_seconds: waitSeconds,
     },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     run: (bridge, input) => bridge.ask(input),
   },
   {
@@ -41,6 +42,7 @@ export const TOOLS = [
       'Use it after grokbot_ask returned status "running", or when the Bot only acknowledged and is still working in the background. Do not poll in a tight loop.' +
       UNTRUSTED,
     inputSchema: { agent, wait_seconds: waitSeconds },
+    annotations: { readOnlyHint: true, openWorldHint: true },
     run: (bridge, input) => bridge.check(input),
   },
   {
@@ -49,6 +51,7 @@ export const TOOLS = [
     description:
       "Stop the Grok Bot's current turn when it is doing the wrong thing or the plan changed. Its conversation and memory stay.",
     inputSchema: { agent },
+    annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
     run: (bridge, input) => bridge.interrupt(input),
   },
   {
@@ -56,6 +59,7 @@ export const TOOLS = [
     title: "List Grok Bots",
     description: "List the Grok Bots this bridge may contact and the ones already contacted. Sends nothing.",
     inputSchema: {},
+    annotations: { readOnlyHint: true, openWorldHint: false },
     run: (bridge) => bridge.list(),
   },
 ];

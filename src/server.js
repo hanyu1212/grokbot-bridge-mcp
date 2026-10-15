@@ -22,7 +22,12 @@ const server = new McpServer({ name: "grokbot-bridge", version: "0.1.0" });
 for (const tool of TOOLS) {
   server.registerTool(
     tool.name,
-    { title: tool.title, description: tool.description, inputSchema: tool.inputSchema },
+    {
+      title: tool.title,
+      description: tool.description,
+      inputSchema: tool.inputSchema,
+      annotations: tool.annotations,
+    },
     async (input) => {
       try {
         const result = await tool.run(bridge, input);
