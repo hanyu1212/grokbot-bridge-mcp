@@ -1,8 +1,8 @@
 import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { dirname, join } from "node:path";
+import { delimiter, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseListeningUrl } from "./config.js";
 
@@ -14,6 +14,33 @@ function bdkBin() {
   const pkgPath = require.resolve("@cursor/bdk/package.json");
   const { bin } = require(pkgPath);
   return join(dirname(pkgPath), typeof bin === "string" ? bin : bin.bdk);
+}
+
+const GITHUB_ENV_VARS = [
+  "GITHUB_TOKEN",
+  "GH_TOKEN",
+  "GH_ENTERPRISE_TOKEN",
+  "GITHUB_ENTERPRISE_TOKEN",
+  "GITHUB_APP_ID",
+  "GITHUB_APP_PRIVATE_KEY",
+  "GITHUB_APP_INSTALLATION_ID",
+];
+
+/**
+ * `bdk serve` looks for GitHub credentials at startup (env vars, then
+ * `gh auth token`) for GitHub channels this bridge never uses. Strip the env
+ * vars and shadow `gh` with a stub that always fails, so no GitHub token is
+ * ever loaded into the serve process.
+ */
+export function serveEnv(env, stubDir) {
+  mkdirSync(stubDir, { recursive: true, mode: 0o700 });
+  writeFileSync(join(stubDir, "gh"), "#!/bin/sh\nexit 1\n", { mode: 0o755 });
+  writeFileSync(join(stubDir, "gh.cmd"), "@exit /b 1\r\n");
+  const next = { ...env };
+  for (const name of GITHUB_ENV_VARS) delete next[name];
+  const pathKey = Object.keys(next).find((key) => key.toUpperCase() === "PATH") ?? "PATH";
+  next[pathKey] = [stubDir, next[pathKey]].filter(Boolean).join(delimiter);
+  return next;
 }
 
 /**
@@ -45,7 +72,7 @@ export async function startServe({ agents, stateDir, log = () => {} }) {
       "--no-schedules",
     ],
     {
-      env: { ...process.env, GROKBOT_AGENTS: agents.join(",") },
+      env: { ...serveEnv(process.env, join(stateDir, "no-github")), GROKBOT_AGENTS: agents.join(",") },
       stdio: ["ignore", "pipe", "pipe"],
     },
   );

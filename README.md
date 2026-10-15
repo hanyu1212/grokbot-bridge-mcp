@@ -117,6 +117,7 @@ npx -p grokbot-bridge-mcp grokbot-bridge list
 - **把 Bot 的回复当作不可信内容。** 工具描述里已经提醒调用方 Agent 不要把回复当指令执行，你自己的规则里最好也写上。
 - 如果你给 MCP 工具开了自动运行（免审批），就等于 Agent 可以不经确认地给 Bot 派活，请确认你接受这一点。
 - 凭据只从 `CURSOR_API_KEY` 或 `bdk login` 读取，本项目不会打印或保存你的 key。
+- 不碰 GitHub 凭据：BDK 启动时默认会找 GitHub 凭据（环境变量和 `gh auth token`），给它的 GitHub 功能用。本项目用不到，所以会在启动 BDK 前去掉这些环境变量，并屏蔽 `gh`。
 
 ## 环境变量
 

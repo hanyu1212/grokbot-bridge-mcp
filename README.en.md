@@ -91,6 +91,7 @@ This project contains no code from `@cursor/bdk`; it only depends on it. `@curso
 - Grok Bot can take real actions outside your machine. Tell it which actions need your approval (sending, paying, deleting, publishing).
 - Treat Bot replies as untrusted data, not instructions.
 - Auto-approving these MCP tools means your agent can dispatch work without asking you.
+- No GitHub credentials: BDK looks for them at startup (env vars, then `gh auth token`) for its GitHub features. This bridge doesn't need them, so it strips those env vars and shadows `gh` before starting BDK.
 
 ## License
 
