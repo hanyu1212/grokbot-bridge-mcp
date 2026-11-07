@@ -117,7 +117,7 @@ grokbot-bridge list
 
 ## 工作原理
 
-1. 启动时在本机回环地址上拉起一个 `bdk serve`，挂载 `@cursor/bdk` 官方的 `cursor-grokbot-agents` 扩展，端口随机，带随机 bearer token。
+1. 首次调用工具时在本机回环地址上按需拉起 `bdk serve`（挂载 `@cursor/bdk` 官方的 `cursor-grokbot-agents` 扩展，端口随机，带随机 bearer token），空闲几分钟后自动回收。
 2. 每次工具调用都通过 serve 暴露的 `call_tool` 直接执行扩展里的工具，不跑模型。
 3. 已读位置保存在 `~/.config/grokbot-bridge/serve/`，重启后 `check` 依然接得上。
 

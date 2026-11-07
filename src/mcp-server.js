@@ -41,14 +41,17 @@ for (const tool of TOOLS) {
   );
 }
 
-const shutdown = async () => {
-  await bridge.close();
-  process.exit(0);
+let shuttingDown;
+const shutdown = () => {
+  shuttingDown ??= (async () => {
+    await bridge.close();
+    process.exit(0);
+  })();
+  return shuttingDown;
 };
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 process.stdin.on("close", shutdown);
 
+// `bdk serve` is started lazily on the first tool call and stopped after idle.
 await server.connect(new StdioServerTransport());
-// Start bdk serve in the background so the first tool call is fast.
-bridge.connect().catch((error) => log(`grokbot-bridge-mcp: ${error.message}\n`));

@@ -101,7 +101,7 @@ grokbot-bridge list
 
 ## How it works
 
-1. On startup it launches `bdk serve` on loopback (random port, random bearer token) with the official `cursor-grokbot-agents` extension from `@cursor/bdk` mounted.
+1. On the first tool call it launches `bdk serve` on loopback (random port, random bearer token) with the official `cursor-grokbot-agents` extension from `@cursor/bdk` mounted, and stops it after a few minutes of inactivity.
 2. Each tool call runs the extension's tool directly through the server's `call_tool` endpoint. No model turn.
 3. Read positions persist under `~/.config/grokbot-bridge/serve/`, so `check` works across restarts.
 
