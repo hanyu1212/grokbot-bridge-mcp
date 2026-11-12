@@ -17,6 +17,30 @@ export function withFinishNote(message) {
   return `${message.trimEnd()}\n\n${FINISH_IN_TURN_NOTE}`;
 }
 
+// The Bot's routines post into the same conversation, so unread backlog can
+// reach hundreds of KB; some MCP clients truncate or drop results that large.
+export const EARLIER_REPLIES_KEEP = 3;
+export const EARLIER_REPLY_MAX_CHARS = 600;
+
+export function trimEarlierReplies(result) {
+  const earlier = result?.earlierReplies;
+  if (!Array.isArray(earlier) || earlier.length === 0) return result;
+  const kept = earlier.slice(-EARLIER_REPLIES_KEEP).map((reply) =>
+    typeof reply === "string" && reply.length > EARLIER_REPLY_MAX_CHARS
+      ? `${reply.slice(0, EARLIER_REPLY_MAX_CHARS)}…[truncated]`
+      : reply,
+  );
+  const omitted = earlier.length - kept.length;
+  return {
+    ...result,
+    earlierReplies: kept,
+    ...(omitted > 0 && {
+      earlierRepliesOmitted: omitted,
+      earlierRepliesNote: `${omitted} older unread replies omitted; they remain in the Grok Bot app.`,
+    }),
+  };
+}
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function defaultConnectClient(serve) {
@@ -180,7 +204,7 @@ export class GrokBotBridge {
       "grokbot__ask",
       { agent: resolveAgent(agent, this.config.agents), message: text, wait_seconds },
       wait_seconds,
-    );
+    ).then(trimEarlierReplies);
   }
 
   /**
@@ -194,7 +218,9 @@ export class GrokBotBridge {
       while (true) {
         const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
         const result = await this.call("grokbot__check", { agent: name, wait_seconds: remaining }, remaining);
-        if (result.reply !== undefined || result.status === "running" || Date.now() >= deadline) return result;
+        if (result.reply !== undefined || result.status === "running" || Date.now() >= deadline) {
+          return trimEarlierReplies(result);
+        }
         await sleep(this.recheckIntervalMs);
       }
     });

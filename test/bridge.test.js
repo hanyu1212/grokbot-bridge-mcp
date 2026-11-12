@@ -213,3 +213,28 @@ test("does not idle-reclaim while check is waiting between polls", async () => {
   await bridge.close();
   assert.equal(instances[0].stopped, 1);
 });
+
+test("ask keeps the reply and trims a large unread backlog", async () => {
+  const { startServe } = fakeServeFactory();
+  const backlog = Array.from({ length: 80 }, (_, i) => `routine ${i} `.repeat(200));
+  const { connectClient } = fakeClientFactory({
+    onCallTool: async () => {
+      const result = { agent: "Grok Bot", status: "finished", reply: "PONG", earlierReplies: backlog };
+      return { content: [{ type: "text", text: JSON.stringify({ result }) }] };
+    },
+  });
+  const bridge = new GrokBotBridge(
+    { agents: ["Grok Bot"], stateDir: "/tmp/gbb", finishInTurn: true },
+    { startServe, connectClient, idleTimeoutMs: 0 },
+  );
+
+  const result = await bridge.ask({ message: "ping", wait_seconds: 1 });
+  assert.equal(result.reply, "PONG");
+  assert.equal(result.earlierReplies.length, 3);
+  assert.ok(result.earlierReplies[2].startsWith("routine 79 "));
+  assert.ok(result.earlierReplies.every((reply) => reply.length < 700));
+  assert.equal(result.earlierRepliesOmitted, 77);
+  assert.ok(JSON.stringify(result).length < 4000);
+
+  await bridge.close();
+});
